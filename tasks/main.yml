@@ -1,0 +1,181 @@
+---
+# tasks file for network
+
+- name: Determine si le fichier eth0 existe
+  stat:
+    path: /etc/network/interfaces.d/eth0
+  register: network_result_interface_eth0
+  when: ansible_lsb.id == 'Debian'
+
+- name: Change la ligne GRUB_CMDLINE_LINUX="" si l'interface s'appelle "{{ network_interface_to_be_changed }}"
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX=""'
+    line: 'GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"'
+  when: 
+    - ansible_default_ipv4.interface == network_interface_to_be_changed
+    - network_result_interface_eth0.stat.exists == False
+    - ansible_lsb.id == 'Debian'
+
+- name: Genère un nouveau fichier grub
+  shell: grub-mkconfig -o /boot/grub/grub.cfg
+  when:
+    - ansible_default_ipv4.interface == network_interface_to_be_changed
+    - network_result_interface_eth0.stat.exists == False
+    - ansible_lsb.id == 'Debian'
+
+- name: Retrait du fichier de l'interface "{{ network_interface_to_be_changed }}"
+  file:
+    path: /etc/network/interfaces.d/{{ network_interface_to_be_changed }}
+    state: absent
+  when: 
+    - ansible_default_ipv4.interface == network_interface_to_be_changed
+    - ansible_lsb.id == 'Debian'
+
+- name: Copie du fichier interfaces dans /etc/
+  copy:
+    src: interfaces
+    dest: /etc/network/interfaces
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - ansible_lsb.id == 'Debian'
+
+- name: Création du dossier interfaces.d
+  file:
+    path: /etc/network/interfaces.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+    - ansible_lsb.id == 'Debian'
+
+- name: Configuration de eth0
+  template:
+    src: eth0.j2
+    dest: /etc/network/interfaces.d/eth0
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_eth0 == "yes"
+    - ansible_distribution == 'Debian'
+    - network_switch_interface == 'no'
+
+- name: Configuration de eth1
+  template:
+    src: eth1.j2
+    dest: /etc/network/interfaces.d/eth1
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_eth1 == "yes"
+    - ansible_lsb.id == 'Debian'
+    - network_switch_interface == 'no'
+
+# Si la variable network_switch_interface est à yes, on échange les cartes réseaux
+- name: Configuration de eth0
+  template:
+    src: eth0_switch.j2
+    dest: /etc/network/interfaces.d/eth0
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_eth0 == "yes"
+    - ansible_distribution == 'Debian'
+    - network_switch_interface == 'yes'
+
+# Si la variable network_switch_interface est à yes, on échange les cartes réseaux
+- name: Configuration de eth1
+  template:
+    src: eth1_switch.j2
+    dest: /etc/network/interfaces.d/eth1
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_eth1 == "yes"
+    - ansible_lsb.id == 'Debian'
+    - network_switch_interface == 'yes'
+
+- name: Création du dossier interfaces.d
+  file:
+    path: /etc/wpa_supplicant
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when:
+    - ansible_lsb.id == 'Raspbian'
+
+- name: Configuration de wpa_supplicant
+  template:
+    src: wpa_supplicant.conf.j2
+    dest: /etc/wpa_supplicant/wpa_supplicant.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_wlan0 == "yes"
+    - ansible_lsb.id == 'Raspbian'
+
+- name: Configuration de wlan0
+  template:
+    src: wlan0.j2
+    dest: /etc/network/interfaces.d/wlan0
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - network_enable_wlan0 == "yes"
+    - ansible_lsb.id == 'Raspbian'
+
+- name: Retrait du mode economie d'energie de wlan0
+  shell: "iwconfig wlan0 power off"
+  when:
+    - network_enable_wlan0 == "yes"
+    - ansible_lsb.id == 'Raspbian'
+
+- name: Rendre ça permanent
+  copy:
+    src: rc.local
+    dest: /etc/rc.local
+    owner: root
+    group: root
+    mode: 0755
+    state: present
+  when:
+    - network_enable_wlan0 == "yes"
+    - ansible_lsb.id == 'Raspbian'
+
+########################################### RHEL #########################################
+# Pour RHEL, mettre des variables dans les fichiers jinja2
+
+
+# - name: Configuration de eth0
+#   template:
+#     src: ./templates/eth0.j2
+#     dest: /etc/network/interfaces.d/eth0
+#     owner: root
+#     group: root
+#     mode: '0644'
+#   when:
+#     - network_enable_eth0 == "yes"
+#     - ansible_distribution == 'Redhat'
+
+# - name: Configuration de eth1
+#   template:
+#     src: ./templates/eth1.j2
+#     dest: /etc/network/interfaces.d/eth1
+#     owner: root
+#     group: root
+#     mode: '0644'
+#   when:
+#     - network_enable_eth1 == "yes"
+#     - ansible_distribution == 'Redhat'
+
+...

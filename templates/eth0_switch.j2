@@ -1,0 +1,6 @@
+auto eth0
+allow-hotplug eth0
+iface eth0 inet static
+    address {{ network_eth1_ip }}
+    netmask {{ network_eth1_netmask }}
+    {{ network_eth1_gateway }}

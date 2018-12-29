@@ -1,0 +1,18 @@
+---
+# defaults file for network
+# network_interface_to_be_changed: "ens33" # ens33 (Virtual) ou enp0f1 (Physical)
+
+# network_enable_eth0: yes
+# network_enable_eth1: yes
+# network_enable_wlan0: yes
+
+# network_eth1_ip: 
+# network_eth1_netmask: 255.255.255.0
+# network_eth1_gateway: "gateway 192.168.1.254" # Ou vide
+
+# network_wlan0_ip: 192.168.1.X
+# network_wlan0_netmask: 255.255.255.0
+# network_wlan0_gateway: "gateway 192.168.1.254" # Ou vide
+
+# network_wifi_ssid: "Toad's Kingdom"
+# network_wifi_password: "54718e8e6a5314e7e91167227038e0d07ffcf8890dde556db14fd34d6e394249"
